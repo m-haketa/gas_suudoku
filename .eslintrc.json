@@ -6,6 +6,7 @@
     },
     "extends": [
         "plugin:@typescript-eslint/recommended",
+        "prettier",
         "plugin:prettier/recommended"
     ],
     "plugins": [
@@ -18,8 +19,8 @@
         "SharedArrayBuffer": "readonly"
     },
     "parserOptions": {
-        "ecmaVersion": 2018,
-        "sourceType": "module"
+        "sourceType": "module",
+        "project": "./tsconfig.json"
     },
     "rules": {
         "@typescript-eslint/adjacent-overload-signatures": "error",

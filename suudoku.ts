@@ -2,17 +2,6 @@ const MAX_COUNT = 9
 
 const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Solver')
 
-const fillArray = (Arr: any[], Value: any): void => {
-  for (let i = 0; i < Arr.length; i++) {
-    Arr[i] = Value
-  }
-}
-
-const displayMatrix = (Arr: any[][]): void => {
-  sheet.getRange(1, 11, 9, 9).setValues(Arr)
-  Logger.log(JSON.stringify(Arr))
-}
-
 class Cell {
   private y_: number
   private x_: number
@@ -49,20 +38,26 @@ class Step {
   }
 }
 
+const fillArray = <T>(Arr: T[], Value: T): void => {
+  for (let i = 0; i < Arr.length; i++) {
+    Arr[i] = Value
+  }
+}
+
 class Constraint {
   private yConstraint_: number[]
   private xConstraint_: number[]
   private groupConstraint_: number[]
 
-  public constructor(initialData?: any[][]) {
+  public constructor(initialData?: number[][]) {
     this.yConstraint_ = Array(MAX_COUNT)
-    fillArray(this.yConstraint_, '')
+    fillArray(this.yConstraint_, 0)
 
     this.xConstraint_ = Array(MAX_COUNT)
-    fillArray(this.xConstraint_, '')
+    fillArray(this.xConstraint_, 0)
 
     this.groupConstraint_ = Array(MAX_COUNT)
-    fillArray(this.groupConstraint_, '')
+    fillArray(this.groupConstraint_, 0)
 
     if (initialData !== undefined) {
       for (let y = 0; y < MAX_COUNT; y++) {
@@ -99,15 +94,15 @@ class Constraint {
     return numbers
   }
 
-  public getDataForDebug(): any[][] {
+  public getDataForDebug(): number[][] {
     //0列目、0行目はヘッダーのイメージ。それに、内容用の1～9行目、1～9列目を確保
     const MAX_COUNT_FOR_GETDATA = MAX_COUNT + 1
 
-    let Ret = new Array(MAX_COUNT_FOR_GETDATA)
+    let Ret: number[][] = new Array(MAX_COUNT_FOR_GETDATA)
 
     for (let y = 0; y < MAX_COUNT_FOR_GETDATA; y++) {
       Ret[y] = new Array(MAX_COUNT_FOR_GETDATA)
-      fillArray(Ret[y], '')
+      fillArray(Ret[y], 0)
     }
 
     //行の制約を出力
@@ -132,13 +127,13 @@ class Constraint {
 }
 
 class Matrix {
-  private data_: any[][]
+  private data_: number[][]
 
   private constraint_: Constraint
   private LastSearchedCell_: Cell
 
   public constructor(
-    initialData?: any[][],
+    initialData?: number[][],
     LastSearchedCell: Cell = new Cell(MAX_COUNT - 1, MAX_COUNT - 1)
   ) {
     if (initialData === undefined) {
@@ -179,14 +174,14 @@ class Matrix {
   }
 
   public BlankCellCount(): number {
-    const Arr = this.data_.reduce((prev, cur): any[] => {
+    const Arr = this.data_.reduce((prev, cur): number[] => {
       prev.push(...cur)
       return prev
     }, [])
 
     return Arr.filter(
       (ele): boolean => {
-        return ele === ''
+        return ele === 0
       }
     ).length
 
@@ -203,7 +198,7 @@ class Matrix {
      */
   }
 
-  public getNextCellAndNumbers(): { cell: Cell; availableNumbers: any[] } {
+  public getNextCellAndNumbers(): { cell: Cell; availableNumbers: number[] } {
     let y = this.LastSearchedCell_.y()
     let x = this.LastSearchedCell_.x()
 
@@ -228,12 +223,10 @@ class Matrix {
         break
       }
 
-      if (this.data_[y][x] === '') {
+      if (this.data_[y][x] === 0) {
         const targetCell = new Cell(y, x)
         this.LastSearchedCell_ = targetCell
-        const availableNums: any[] = this.constraint_.getAvailableNumbers(
-          targetCell
-        )
+        const availableNums = this.constraint_.getAvailableNumbers(targetCell)
         if (availableNums.length > 0) {
           return { cell: targetCell, availableNumbers: availableNums }
         } else {
@@ -246,7 +239,7 @@ class Matrix {
     return { cell: this.LastSearchedCell_, availableNumbers: [] }
   }
 
-  public getData(): any[][] {
+  public getData(): number[][] {
     return this.data_
   }
 
@@ -259,7 +252,7 @@ class SuudokuSolver {
   private records_: Matrix[]
   private nextStep_: Step[]
 
-  public constructor(initialData: any[][]) {
+  public constructor(initialData: number[][]) {
     if (initialData.length != MAX_COUNT) {
       throw new Error(
         `Matrix作成時の1次元目の配列の長さ ${
@@ -286,7 +279,7 @@ class SuudokuSolver {
 
   public solve(
     recordNo: number = 0,
-    displayCallback: (...values: any) => void
+    displayCallback: (values: number[][]) => void
   ): boolean {
     if (this.records_[recordNo].BlankCellCount() === 0) {
       sheet.getRange(1, 11, 9, 9).setValues(this.records_[recordNo].getData())
@@ -325,10 +318,10 @@ class SuudokuSolver {
         return true
       }
     }
-    return false;
+    return false
   }
 
-  public getData(): any[][] {
+  public getData(): number[][] {
     return this.records_[this.records_.length].getData()
   }
 
@@ -337,8 +330,16 @@ class SuudokuSolver {
   }
 }
 
+const displayMatrix = <T>(Arr: T[][]): void => {
+  sheet.getRange(1, 11, 9, 9).setValues(Arr)
+  Logger.log(JSON.stringify(Arr))
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function main(): void {
-  const solver = new SuudokuSolver(sheet.getRange(1, 1, 9, 9).getValues())
+  const solver = new SuudokuSolver(sheet
+    .getRange(1, 1, 9, 9)
+    .getValues() as number[][])
 
   const solved = solver.solve(0, displayMatrix)
   //  sheet.getRange(1,11,9,9).setValues(solver.getData())
