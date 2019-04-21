@@ -2,7 +2,6 @@
   "name": "suudoku",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "dependencies": {},
   "devDependencies": {
     "@types/google-apps-script": "0.0.44",
@@ -16,6 +15,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --ext .ts .",
+    "lint:fix": "eslint --ext .ts --fix .",
     "build": "tsc"
   },
   "keywords": [],

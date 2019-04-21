@@ -1,35 +1,36 @@
-module.exports = {
+{
     "env": {
         "browser": true,
         "es6": true,
-        "googleappsscript/googleappsscript": true,
+        "googleappsscript/googleappsscript": true
     },
     "extends": [
-        "eslint:recommended",
-        "plugin:prettier/recommended",
-    ],  
+        "plugin:@typescript-eslint/recommended",
+        "prettier",
+        "plugin:prettier/recommended"
+    ],
     "plugins": [
         "@typescript-eslint",
-        "googleappsscript",
-      ],
+        "googleappsscript"
+    ],
     "parser": "@typescript-eslint/parser",
     "globals": {
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
     "parserOptions": {
-        "ecmaVersion": 2018,
-        "sourceType": "module"
+        "sourceType": "module",
+        "project": "./tsconfig.json"
     },
     "rules": {
         "@typescript-eslint/adjacent-overload-signatures": "error",
+        "@typescript-eslint/indent": ["error", 2],
         "prettier/prettier": [
             "error",
             {
-              "singleQuote": true,
-              "semi": false,
-//              "trailingComma": "es5"
+                "singleQuote": true,
+                "semi": false
             }
         ]
     }
-};
+}
