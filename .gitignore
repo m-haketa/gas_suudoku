@@ -89,3 +89,4 @@ typings/
 
 .clasp.json
 appsscript.json
+dist/

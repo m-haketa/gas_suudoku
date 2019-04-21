@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./",
+        "module": "commonjs",
+        "target": "es3",
+        "declaration": true,
+        "strictNullChecks": true,
+        "baseUrl": ".",
+        "paths": {
+            "*": ["@types/*"]
+        },
+        "esModuleInterop": true
+    },
+    "include": ["./**/*"],
+    "exclude": ["node_modules"]
+}
