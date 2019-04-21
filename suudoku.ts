@@ -284,7 +284,10 @@ class SuudokuSolver {
     this.nextStep_ = []
   }
 
-  public solve(recordNo: number = 0, displayCallback): boolean {
+  public solve(
+    recordNo: number = 0,
+    displayCallback: (...values: any) => void
+  ): boolean {
     if (this.records_[recordNo].BlankCellCount() === 0) {
       sheet.getRange(1, 11, 9, 9).setValues(this.records_[recordNo].getData())
       return true
@@ -322,7 +325,7 @@ class SuudokuSolver {
         return true
       }
     }
-    return false
+    return false;
   }
 
   public getData(): any[][] {
