@@ -6,7 +6,7 @@ class Cell {
   private y_: number
   private x_: number
 
-  constructor(y: number, x: number) {
+  public constructor(y: number, x: number) {
     if (x >= 0 && x <= 8 && y >= 0 && y <= 8) {
       this.y_ = y
       this.x_ = x
@@ -32,25 +32,113 @@ class Step {
   public cell: Cell
   public number: number
 
-  constructor(cell, number) {
+  public constructor(cell, number) {
     this.cell = cell
     this.number = number
   }
 }
 
+const fillArray = <T>(Arr: T[], Value: T): void => {
+  for (let i = 0; i < Arr.length; i++) {
+    Arr[i] = Value
+  }
+}
+
+class Constraint {
+  private yConstraint_: number[]
+  private xConstraint_: number[]
+  private groupConstraint_: number[]
+
+  public constructor(initialData?: number[][]) {
+    this.yConstraint_ = Array(MAX_COUNT)
+    fillArray(this.yConstraint_, 0)
+
+    this.xConstraint_ = Array(MAX_COUNT)
+    fillArray(this.xConstraint_, 0)
+
+    this.groupConstraint_ = Array(MAX_COUNT)
+    fillArray(this.groupConstraint_, 0)
+
+    if (initialData !== undefined) {
+      for (let y = 0; y < MAX_COUNT; y++) {
+        for (let x = 0; x < MAX_COUNT; x++) {
+          if (initialData[y][x] > 0) {
+            this.addData(new Cell(y, x), initialData[y][x])
+          }
+        }
+      }
+    }
+  }
+
+  public addData(cell: Cell, number: number): void {
+    this.yConstraint_[cell.y()] |= 2 ** (number - 1)
+    this.xConstraint_[cell.x()] |= 2 ** (number - 1)
+    this.groupConstraint_[cell.group()] |= 2 ** (number - 1)
+  }
+
+  public getAvailableNumbers(cell: Cell): number[] {
+    const Constraints =
+      this.yConstraint_[cell.y()] |
+      this.xConstraint_[cell.x()] |
+      this.groupConstraint_[cell.group()]
+
+    let numbers: number[] = []
+
+    for (let num = 1; num <= MAX_COUNT; num++) {
+      const numBit = 2 ** (num - 1)
+      if ((Constraints & numBit) === 0) {
+        numbers.push(num)
+      }
+    }
+
+    return numbers
+  }
+
+  public getDataForDebug(): number[][] {
+    //0列目、0行目はヘッダーのイメージ。それに、内容用の1～9行目、1～9列目を確保
+    const MAX_COUNT_FOR_GETDATA = MAX_COUNT + 1
+
+    let Ret: number[][] = new Array(MAX_COUNT_FOR_GETDATA)
+
+    for (let y = 0; y < MAX_COUNT_FOR_GETDATA; y++) {
+      Ret[y] = new Array(MAX_COUNT_FOR_GETDATA)
+      fillArray(Ret[y], 0)
+    }
+
+    //行の制約を出力
+    for (let y = 0; y < MAX_COUNT; y++) {
+      Ret[y + 1][0] = this.yConstraint_[y]
+    }
+
+    //列の制約を出力
+    for (let x = 0; x < MAX_COUNT; x++) {
+      Ret[0][x + 1] = this.xConstraint_[x]
+    }
+
+    //グループの制約を出力
+    for (let group = 0; group < MAX_COUNT; group++) {
+      const y = Math.floor(group / 3)
+      const x = group - y * 3
+      Ret[1 + y * 3][1 + x * 3] = this.groupConstraint_[group]
+    }
+
+    return Ret
+  }
+}
+
 class Matrix {
-  private data_: any[][]
+  private data_: number[][]
 
   private constraint_: Constraint
   private LastSearchedCell_: Cell
 
-  constructor(
-    initialData?: any[][],
+  public constructor(
+    initialData?: number[][],
     LastSearchedCell: Cell = new Cell(MAX_COUNT - 1, MAX_COUNT - 1)
   ) {
     if (initialData === undefined) {
       this.data_ = new Array(MAX_COUNT)
-      for (let i: number = 0; i < MAX_COUNT; i++) {
+      for (let i = 0; i < MAX_COUNT; i++) {
         this.data_[i] = new Array(MAX_COUNT)
       }
     } else {
@@ -62,7 +150,7 @@ class Matrix {
         )
       }
 
-      for (let i: number = 1; i < MAX_COUNT; i++) {
+      for (let i = 1; i < MAX_COUNT; i++) {
         if (initialData[i].length != MAX_COUNT) {
           throw new Error(
             `Matrix作成時のinitialdata[${i}]の2次元目の配列の長さ ${
@@ -80,20 +168,22 @@ class Matrix {
     this.LastSearchedCell_ = LastSearchedCell
   }
 
-  public addData(cell: Cell, number: number) {
+  public addData(cell: Cell, number: number): void {
     this.data_[cell.y()][cell.x()] = number
     this.constraint_.addData(cell, number)
   }
 
-  public BlankCellCount(): Number {
-    const Arr = this.data_.reduce((prev, cur) => {
+  public BlankCellCount(): number {
+    const Arr = this.data_.reduce((prev, cur): number[] => {
       prev.push(...cur)
       return prev
-    }, new Array())
+    }, [])
 
-    return Arr.filter(ele => {
-      return ele === ''
-    }).length
+    return Arr.filter(
+      (ele): boolean => {
+        return ele === 0
+      }
+    ).length
 
     /*
      let count = 0
@@ -108,7 +198,7 @@ class Matrix {
      */
   }
 
-  public getNextCellAndNumbers(): { cell: Cell; availableNumbers: any[] } {
+  public getNextCellAndNumbers(): { cell: Cell; availableNumbers: number[] } {
     let y = this.LastSearchedCell_.y()
     let x = this.LastSearchedCell_.x()
 
@@ -133,12 +223,10 @@ class Matrix {
         break
       }
 
-      if (this.data_[y][x] === '') {
+      if (this.data_[y][x] === 0) {
         const targetCell = new Cell(y, x)
         this.LastSearchedCell_ = targetCell
-        const availableNums: any[] = this.constraint_.getAvailableNumbers(
-          targetCell
-        )
+        const availableNums = this.constraint_.getAvailableNumbers(targetCell)
         if (availableNums.length > 0) {
           return { cell: targetCell, availableNumbers: availableNums }
         } else {
@@ -148,10 +236,10 @@ class Matrix {
       }
     }
 
-    return { cell: this.LastSearchedCell_, availableNumbers: new Array() }
+    return { cell: this.LastSearchedCell_, availableNumbers: [] }
   }
 
-  public getData(): any[][] {
+  public getData(): number[][] {
     return this.data_
   }
 
@@ -160,93 +248,11 @@ class Matrix {
   }
 }
 
-class Constraint {
-  private yConstraint_: number[]
-  private xConstraint_: number[]
-  private groupConstraint_: number[]
-
-  constructor(initialData?: any[][]) {
-    this.yConstraint_ = Array(MAX_COUNT)
-    fillArray(this.yConstraint_, '')
-
-    this.xConstraint_ = Array(MAX_COUNT)
-    fillArray(this.xConstraint_, '')
-
-    this.groupConstraint_ = Array(MAX_COUNT)
-    fillArray(this.groupConstraint_, '')
-
-    if (initialData !== undefined) {
-      for (let y: number = 0; y < MAX_COUNT; y++) {
-        for (let x: number = 0; x < MAX_COUNT; x++) {
-          if (initialData[y][x] > 0) {
-            this.addData(new Cell(y, x), initialData[y][x])
-          }
-        }
-      }
-    }
-  }
-
-  public addData(cell: Cell, number: number) {
-    this.yConstraint_[cell.y()] |= 2 ** (number - 1)
-    this.xConstraint_[cell.x()] |= 2 ** (number - 1)
-    this.groupConstraint_[cell.group()] |= 2 ** (number - 1)
-  }
-
-  public getAvailableNumbers(cell: Cell): number[] {
-    const Constraints =
-      this.yConstraint_[cell.y()] |
-      this.xConstraint_[cell.x()] |
-      this.groupConstraint_[cell.group()]
-
-    let numbers = new Array()
-
-    for (let num = 1; num <= MAX_COUNT; num++) {
-      const numBit = 2 ** (num - 1)
-      if ((Constraints & numBit) === 0) {
-        numbers.push(num)
-      }
-    }
-
-    return numbers
-  }
-
-  public getDataForDebug(): any[][] {
-    //0列目、0行目はヘッダーのイメージ。それに、内容用の1～9行目、1～9列目を確保
-    const MAX_COUNT_FOR_GETDATA = MAX_COUNT + 1
-
-    let Ret = new Array(MAX_COUNT_FOR_GETDATA)
-
-    for (let y: number = 0; y < MAX_COUNT_FOR_GETDATA; y++) {
-      Ret[y] = new Array(MAX_COUNT_FOR_GETDATA)
-      fillArray(Ret[y], '')
-    }
-
-    //行の制約を出力
-    for (let y: number = 0; y < MAX_COUNT; y++) {
-      Ret[y + 1][0] = this.yConstraint_[y]
-    }
-
-    //列の制約を出力
-    for (let x: number = 0; x < MAX_COUNT; x++) {
-      Ret[0][x + 1] = this.xConstraint_[x]
-    }
-
-    //グループの制約を出力
-    for (let group: number = 0; group < MAX_COUNT; group++) {
-      const y = Math.floor(group / 3)
-      const x = group - y * 3
-      Ret[1 + y * 3][1 + x * 3] = this.groupConstraint_[group]
-    }
-
-    return Ret
-  }
-}
-
 class SuudokuSolver {
   private records_: Matrix[]
   private nextStep_: Step[]
 
-  constructor(initialData: any[][]) {
+  public constructor(initialData: number[][]) {
     if (initialData.length != MAX_COUNT) {
       throw new Error(
         `Matrix作成時の1次元目の配列の長さ ${
@@ -255,7 +261,7 @@ class SuudokuSolver {
       )
     }
 
-    for (let i: number = 1; i < MAX_COUNT; i++) {
+    for (let i = 1; i < MAX_COUNT; i++) {
       if (initialData[i].length != MAX_COUNT) {
         throw new Error(
           `Matrix作成時のinitialdata[${i}]の2次元目の配列の長さ ${
@@ -265,13 +271,16 @@ class SuudokuSolver {
       }
     }
 
-    this.records_ = new Array()
+    this.records_ = []
     this.records_[0] = new Matrix(initialData)
 
-    this.nextStep_ = new Array()
+    this.nextStep_ = []
   }
 
-  public solve(recordNo: number = 0, displayCallback): boolean {
+  public solve(
+    recordNo: number = 0,
+    displayCallback: (values: number[][]) => void
+  ): boolean {
     if (this.records_[recordNo].BlankCellCount() === 0) {
       sheet.getRange(1, 11, 9, 9).setValues(this.records_[recordNo].getData())
       return true
@@ -309,9 +318,10 @@ class SuudokuSolver {
         return true
       }
     }
+    return false
   }
 
-  public getData(): any[][] {
+  public getData(): number[][] {
     return this.records_[this.records_.length].getData()
   }
 
@@ -320,20 +330,16 @@ class SuudokuSolver {
   }
 }
 
-const fillArray = (Arr: any[], Value: any) => {
-  for (let i = 0; i < Arr.length; i++) {
-    Arr[i] = Value
-  }
-}
-
-const displayMatrix = (Arr: any[][]) => {
+const displayMatrix = <T>(Arr: T[][]): void => {
   sheet.getRange(1, 11, 9, 9).setValues(Arr)
   Logger.log(JSON.stringify(Arr))
 }
 
-// eslint-disable-next-line no-unused-vars
-function main() {
-  const solver = new SuudokuSolver(sheet.getRange(1, 1, 9, 9).getValues())
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function main(): void {
+  const solver = new SuudokuSolver(sheet
+    .getRange(1, 1, 9, 9)
+    .getValues() as number[][])
 
   const solved = solver.solve(0, displayMatrix)
   //  sheet.getRange(1,11,9,9).setValues(solver.getData())
