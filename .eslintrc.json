@@ -1,17 +1,17 @@
-module.exports = {
+{
     "env": {
         "browser": true,
         "es6": true,
-        "googleappsscript/googleappsscript": true,
+        "googleappsscript/googleappsscript": true
     },
     "extends": [
-        "eslint:recommended",
-        "plugin:prettier/recommended",
-    ],  
+        "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended"
+    ],
     "plugins": [
         "@typescript-eslint",
-        "googleappsscript",
-      ],
+        "googleappsscript"
+    ],
     "parser": "@typescript-eslint/parser",
     "globals": {
         "Atomics": "readonly",
@@ -23,13 +23,13 @@ module.exports = {
     },
     "rules": {
         "@typescript-eslint/adjacent-overload-signatures": "error",
+        "@typescript-eslint/indent": ["error", 2],
         "prettier/prettier": [
             "error",
             {
-              "singleQuote": true,
-              "semi": false,
-//              "trailingComma": "es5"
+                "singleQuote": true,
+                "semi": false
             }
         ]
     }
-};
+}
