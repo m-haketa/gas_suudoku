@@ -6,7 +6,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/google-apps-script": "0.0.44",
-    "@typescript-eslint/eslint-plugin": "^1.6.0",
+    "@typescript-eslint/eslint-plugin": "^1.7.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-googleappsscript": "^1.0.1",
