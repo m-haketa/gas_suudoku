@@ -2,12 +2,14 @@ const MAX_COUNT = 9
 
 const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Solver')
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fillArray = (Arr: any[], Value: any): void => {
   for (let i = 0; i < Arr.length; i++) {
     Arr[i] = Value
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const displayMatrix = (Arr: any[][]): void => {
   sheet.getRange(1, 11, 9, 9).setValues(Arr)
   Logger.log(JSON.stringify(Arr))
@@ -54,6 +56,7 @@ class Constraint {
   private xConstraint_: number[]
   private groupConstraint_: number[]
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public constructor(initialData?: any[][]) {
     this.yConstraint_ = Array(MAX_COUNT)
     fillArray(this.yConstraint_, '')
@@ -99,7 +102,7 @@ class Constraint {
     return numbers
   }
 
-  public getDataForDebug(): any[][] {
+  public getDataForDebug(): string[][] | number[][] {
     //0列目、0行目はヘッダーのイメージ。それに、内容用の1～9行目、1～9列目を確保
     const MAX_COUNT_FOR_GETDATA = MAX_COUNT + 1
 
@@ -132,13 +135,13 @@ class Constraint {
 }
 
 class Matrix {
-  private data_: any[][]
+  private data_: string[][] | number[][]
 
   private constraint_: Constraint
   private LastSearchedCell_: Cell
 
   public constructor(
-    initialData?: any[][],
+    initialData?: string[][] | number[][],
     LastSearchedCell: Cell = new Cell(MAX_COUNT - 1, MAX_COUNT - 1)
   ) {
     if (initialData === undefined) {
@@ -179,7 +182,8 @@ class Matrix {
   }
 
   public BlankCellCount(): number {
-    const Arr = this.data_.reduce((prev, cur): any[] => {
+    /*
+    const Arr = this.data_.reduce((prev, cur) => {
       prev.push(...cur)
       return prev
     }, [])
@@ -189,21 +193,19 @@ class Matrix {
         return ele === ''
       }
     ).length
-
-    /*
-     let count = 0
-     for (let y=0;y<MAX_COUNT;y++) {
-       for (let x=0;x<MAX_COUNT;x++) {
-         if (this.data_[y][x] === "") {
-           count++
-         }
-       }
-     }
-     return count
-     */
+*/
+    let count = 0
+    for (let y = 0; y < MAX_COUNT; y++) {
+      for (let x = 0; x < MAX_COUNT; x++) {
+        if (this.data_[y][x] === '') {
+          count++
+        }
+      }
+    }
+    return count
   }
 
-  public getNextCellAndNumbers(): { cell: Cell; availableNumbers: any[] } {
+  public getNextCellAndNumbers(): { cell: Cell; availableNumbers: number[] } {
     let y = this.LastSearchedCell_.y()
     let x = this.LastSearchedCell_.x()
 
@@ -231,7 +233,7 @@ class Matrix {
       if (this.data_[y][x] === '') {
         const targetCell = new Cell(y, x)
         this.LastSearchedCell_ = targetCell
-        const availableNums: any[] = this.constraint_.getAvailableNumbers(
+        const availableNums: number[] = this.constraint_.getAvailableNumbers(
           targetCell
         )
         if (availableNums.length > 0) {
@@ -246,7 +248,7 @@ class Matrix {
     return { cell: this.LastSearchedCell_, availableNumbers: [] }
   }
 
-  public getData(): any[][] {
+  public getData(): string[][] | number[][] {
     return this.data_
   }
 
@@ -259,6 +261,7 @@ class SuudokuSolver {
   private records_: Matrix[]
   private nextStep_: Step[]
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public constructor(initialData: any[][]) {
     if (initialData.length != MAX_COUNT) {
       throw new Error(
@@ -325,7 +328,7 @@ class SuudokuSolver {
     return false
   }
 
-  public getData(): any[][] {
+  public getData(): string[][] | number[][] {
     return this.records_[this.records_.length].getData()
   }
 
@@ -334,6 +337,7 @@ class SuudokuSolver {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function main(): void {
   const solver = new SuudokuSolver(sheet.getRange(1, 1, 9, 9).getValues())
 
@@ -347,7 +351,23 @@ function main(): void {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function test(): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const value = sheet.getRange(1, 1, 9, 9).getValues()
+}
+
 /*
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function testConstraint(): void {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(
+    'testConstraintInit'
+  )
+  const c = new Constraint(sheet.getRange(2, 2, 9, 9).getValues())
+  sheet.getRange(1, 12, 10, 10).setValues(c.getDataForDebug())
+}
+
+
 function testNextCell() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("testMatrixInit")
   const m = new Matrix(sheet.getRange(1,1,9,9).getValues())
@@ -371,13 +391,6 @@ function testBlankCellCount() {
   sheet.getRange(13,2).setValue(m.BlankCellCount())
   
 }
-
-function testConstraint() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("testConstraintInit")
-  const c = new Constraint(sheet.getRange(2,2,9,9).getValues())
-  sheet.getRange(1,12,10,10).setValues(c.getDataForDebug())
-}
-
 
 function testMatrix() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("testMatrixInit")
